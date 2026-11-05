@@ -31,7 +31,7 @@ export function DirtyFormExample() {
         <FormElement {...formContext} />
       </div>
       <aside className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-medium text-muted-foreground">
           State
         </p>
         <p className="mt-2 rounded-md bg-muted p-3 text-xs" aria-live="polite">

@@ -69,7 +69,7 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
               onPressedChange={onClick}
               disabled={disabled}
               aria-label={label}
-              className="h-9 w-9 transition-all hover:bg-accent data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
+              className="h-9 w-9 transition-[color,background-color,border-color,box-shadow,opacity] hover:bg-accent data-[state=on]:bg-primary/10 data-[state=on]:text-primary"
             >
               <Icon className="h-4 w-4" />
             </Toggle>
@@ -284,7 +284,7 @@ export default function WysiwygEditor(props: {
 
   return (
     <div className="mx-auto w-full">
-      <div className="flex flex-col rounded-lg border border-border bg-background shadow-sm overflow-hidden transition-all focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+      <div className="flex flex-col rounded-lg border border-border bg-background shadow-sm overflow-hidden transition-[color,background-color,border-color,box-shadow,opacity] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         <MenuBar editor={editor} />
 
         {editor && (

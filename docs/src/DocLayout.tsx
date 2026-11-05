@@ -134,7 +134,7 @@ export function LiveExample({
 }) {
   return (
     <div className="not-prose my-6 overflow-hidden rounded-xl border border-border bg-card">
-      <p className="border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="border-b border-border px-4 py-2 text-xs font-medium text-muted-foreground">
         {label}
       </p>
       <div className="p-4">{children}</div>

@@ -301,7 +301,7 @@ export const DateRangeInputController = ({
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal transition-all hover:border-primary/50 hover:bg-primary/5",
+                        "w-full justify-start text-left font-normal transition-[color,background-color,border-color,box-shadow,opacity] hover:border-primary/50 hover:bg-primary/5",
                         !startSelection.date && "text-muted-foreground"
                       )}
                     >
@@ -337,7 +337,7 @@ export const DateRangeInputController = ({
                         updateStart({ ...startSelection, hour: hour ?? "00" })
                       }
                     >
-                      <SelectTrigger className="flex-1 transition-all hover:border-primary/50">
+                      <SelectTrigger className="flex-1 transition-[color,background-color,border-color,box-shadow,opacity] hover:border-primary/50">
                         <SelectValue placeholder="HH" />
                       </SelectTrigger>
                       <SelectContent>
@@ -355,7 +355,7 @@ export const DateRangeInputController = ({
                         updateStart({ ...startSelection, minute: minute ?? "00" })
                       }
                     >
-                      <SelectTrigger className="flex-1 transition-all hover:border-primary/50">
+                      <SelectTrigger className="flex-1 transition-[color,background-color,border-color,box-shadow,opacity] hover:border-primary/50">
                         <SelectValue placeholder="MM" />
                       </SelectTrigger>
                       <SelectContent>
@@ -389,7 +389,7 @@ export const DateRangeInputController = ({
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal transition-all hover:border-primary/50 hover:bg-primary/5",
+                        "w-full justify-start text-left font-normal transition-[color,background-color,border-color,box-shadow,opacity] hover:border-primary/50 hover:bg-primary/5",
                         !endSelection.date && "text-muted-foreground",
                         validationError && endSelection.date && "border-destructive"
                       )}
@@ -431,7 +431,7 @@ export const DateRangeInputController = ({
                     >
                       <SelectTrigger
                         className={cn(
-                          "flex-1 transition-all hover:border-primary/50",
+                          "flex-1 transition-[color,background-color,border-color,box-shadow,opacity] hover:border-primary/50",
                           validationError && "border-destructive"
                         )}
                       >
@@ -457,7 +457,7 @@ export const DateRangeInputController = ({
                     >
                       <SelectTrigger
                         className={cn(
-                          "flex-1 transition-all hover:border-primary/50",
+                          "flex-1 transition-[color,background-color,border-color,box-shadow,opacity] hover:border-primary/50",
                           validationError && "border-destructive"
                         )}
                       >
