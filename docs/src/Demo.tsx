@@ -76,7 +76,7 @@ function FieldState({ label, input }: { label: string; input: FormInputInterface
 
   return (
     <div className="min-w-0" data-state={label}>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="text-xs font-medium text-muted-foreground">
         {label}
       </p>
       <FormElement {...formContext} />
@@ -119,7 +119,7 @@ export function Demo({ demo }: { demo: DemoInterface }) {
         </div>
 
         <aside className="min-w-0 md:border-l md:border-border md:pl-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
             Value
           </p>
           <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-muted p-3 text-xs leading-relaxed">

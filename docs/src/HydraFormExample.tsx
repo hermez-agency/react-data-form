@@ -95,7 +95,7 @@ export function HydraFormExample() {
         <FormElement {...formContext} />
       </div>
       <aside className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-medium text-muted-foreground">
           Submitted
         </p>
         <pre className="mt-2 max-h-52 overflow-auto rounded-md bg-muted p-3 text-xs">

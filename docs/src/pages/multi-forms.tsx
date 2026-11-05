@@ -97,7 +97,7 @@ function AsymmetricFormExample() {
         <FormElement {...formContext} />
       </div>
       <aside className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-xs font-medium text-muted-foreground">
           Form data
         </p>
         <pre className="mt-2 max-h-[32rem] overflow-auto rounded-md bg-muted p-3 text-xs leading-relaxed">
