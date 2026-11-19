@@ -1,0 +1,5 @@
+---
+"react-data-form": patch
+---
+
+Les classes des composants `Checkbox`, `Field`, `FieldDescription` et `ItemMedia` ne placent plus de `:has()` avant l'élément qu'elles stylent. `group-has-disabled/field`, `group-has-data-horizontal/field` et `group-has-data-[slot=item-description]/item` sont réécrites avec la classe elle-même comme sujet (`:where([data-slot=field]):has(…) .classe`), et `has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px` devient « la case n'est pas seule parmi les cases et le contenu du champ » (`:nth-child(n+2 of …)` / `:nth-last-child(n+2 of …)`, sans `:has()` ni `~`). Avec les anciennes formes, Chrome ne pouvait pas savoir quels éléments un changement concernait : chaque élément inséré sous `<body>` (le portail d'une fenêtre) restylait toute la page, ce qui ralentissait l'ouverture et la fermeture des fenêtres sur les grandes pages. Le rendu est inchangé ; un test vérifie que la feuille générée par Tailwind ne contient plus ces formes ni de `~` vers « n'importe quel slot ».
