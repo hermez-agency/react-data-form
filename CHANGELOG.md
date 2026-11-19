@@ -1,5 +1,18 @@
 # react-data-form
 
+## 0.5.0
+
+### Minor Changes
+
+- 1593893: Feuille de style alignée sur le design system Brand Assets (PR #16) : `--heading-weight` passe à 600, `--heading-tracking` à `-0.02em`, le token `--shadow-glow` est supprimé, et les champs livrés utilisent des transitions nommées au lieu de `transition-all`.
+
+### Patch Changes
+
+- 2dcb25f: Les classes des composants `Checkbox`, `Field`, `FieldDescription` et `ItemMedia` ne placent plus de `:has()` avant l'élément qu'elles stylent. `group-has-disabled/field`, `group-has-data-horizontal/field` et `group-has-data-[slot=item-description]/item` sont réécrites avec la classe elle-même comme sujet (`:where([data-slot=field]):has(…) .classe`), et `has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px` devient « la case n'est pas seule parmi les cases et le contenu du champ » (`:nth-child(n+2 of …)` / `:nth-last-child(n+2 of …)`, sans `:has()` ni `~`). Avec les anciennes formes, Chrome ne pouvait pas savoir quels éléments un changement concernait : chaque élément inséré sous `<body>` (le portail d'une fenêtre) restylait toute la page, ce qui ralentissait l'ouverture et la fermeture des fenêtres sur les grandes pages. Le rendu est inchangé ; un test vérifie que la feuille générée par Tailwind ne contient plus ces formes ni de `~` vers « n'importe quel slot ».
+- 6f55708: `FormArrayInputController` : modifier un bloc ne modifie plus que ce bloc. Les blocs sont affichés triés par `identifierKey` (`order`), mais la modification était écrite à la position affichée dans le tableau non trié : dès que l'ordre stocké différait de l'ordre du tableau (données API non triées, ordre changé avec le champ `#`), un autre bloc était écrasé et le bloc édité dupliqué. Le bloc modifié est désormais retrouvé par son `id`, à défaut son `@id`, à défaut sa position dans le tableau source.
+
+  Modifier un bloc après avoir changé son ordre ne lui rend plus l'ancien ordre : celui-ci est porté par l'en-tête du bloc, et le corps du bloc n'écrase plus l'ordre réindexé.
+
 ## 0.4.0
 
 ### Minor Changes
