@@ -48,7 +48,6 @@ pnpm add react-data-form react-mini-i18n resource-registry
 `react` and `react-dom` (19),
 [`react-mini-i18n`](https://github.com/hermez-agency/react-mini-i18n) and
 [`resource-registry`](https://github.com/hermez-agency/resource-registry) are
-
 peer dependencies — your copies are the ones used.
 
 Those two are peer dependencies rather than plain dependencies because each owns
