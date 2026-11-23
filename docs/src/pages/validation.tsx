@@ -74,9 +74,7 @@ function ValidationExample() {
         <FormElement {...formContext} />
       </div>
       <aside className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground">
-          Submitted
-        </p>
+        <p className="text-xs font-medium text-muted-foreground">Submitted</p>
         <pre className="mt-2 max-h-52 overflow-auto rounded-md bg-muted p-3 text-xs">
           <code>
             {submitted
@@ -110,6 +108,24 @@ export function ValidationPage() {
         <LiveExample label="Try to break it">
           <ValidationExample />
         </LiveExample>
+      </Section>
+
+      <Section
+        title="Validate while typing"
+        intro="Opt in with validateOnChange: the edited field is checked once the typing pauses, and its error clears the moment it is valid again."
+      >
+        <CodeBlock>{onChange}</CodeBlock>
+        <p>
+          <code>validateOnChange</code> is <code>true</code> (a one-second pause) or
+          a number of milliseconds, on the form or on a field (<code>false</code>{" "}
+          opts a field out). Only the edited field is validated, plus the fields that
+          list it in <code>dependsOn</code> and were edited or already show an error;
+          a field nobody touched shows nothing. A <code>validator</code> may return a
+          promise: it is awaited, and an answer that arrives after a more recent
+          keystroke is ignored. Submission still validates every field and does not
+          wait for asynchronous validators. Violations returned by the server stay
+          under their field until that field is edited.
+        </p>
       </Section>
 
       <Section
@@ -193,6 +209,24 @@ const validator = `inputs: {
       if (Number(value) < 1) throw new Error("At least one seat")
       if (Number(value) > 4) throw new Error("Four seats at most")
       return value
+    },
+  },
+}`
+
+const onChange = `const form = {
+  validateOnChange: true, // or a number of milliseconds
+  inputs: {
+    username: {
+      validator: async (value) => {
+        if (await isTaken(value)) throw new Error("Already taken")
+      },
+    },
+    password: {},
+    confirm: {
+      dependsOn: ["password"],
+      validator: (value, data) => {
+        if (value !== data.password) throw new Error("Does not match")
+      },
     },
   },
 }`

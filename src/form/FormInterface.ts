@@ -60,6 +60,16 @@ export interface FormInterface<Data extends object = any> {
   onSubmit?: (data: Data) => Data | Promise<Data | void> | void
   className?: string
   saveOnChange?: boolean
+  /**
+   * Validates a field while it is edited, after a pause in the typing: `true`
+   * for the default pause (1 s) or a number of milliseconds. Only the edited
+   * field is validated, with the fields whose `dependsOn` names it; a field
+   * that was never edited shows no error. An error clears as soon as the
+   * field is valid again. A field can set its own, `false` included. Without
+   * it, validation only runs on submission (see `validateOnMount` for
+   * sub-forms).
+   */
+  validateOnChange?: boolean | number
   errors?: string[]
   allowGeneratedValue?: boolean
   /**

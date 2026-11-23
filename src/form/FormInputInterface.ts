@@ -30,9 +30,22 @@ export interface FormInputInterface<Value = any, Data extends object = any> {
   violations?: ViolationInterface[]
   /**
    * Throws to report the value as invalid; what it returns is ignored. `data`
-   * holds the whole form data, for rules spanning several keys.
+   * holds the whole form data, for rules spanning several keys. It may return
+   * a promise ("is this name free?"): it is awaited while typing, a rejection
+   * being the violation. A submission does not wait for it.
    */
   validator?: (value: Value, data?: any) => Value | void
+  /**
+   * Overrides the form's `validateOnChange` for this field: `true` (the form's
+   * pause), a number of milliseconds, or `false` to not validate it while
+   * typing.
+   */
+  validateOnChange?: boolean | number
+  /**
+   * Names of the fields this field's rule reads (`validator(value, data)`):
+   * when one of them is edited, this field is validated again with it.
+   */
+  dependsOn?: string[]
   type?: string | "hidden"
   // Todo : merge default value to default Value in the same property
   defaultValue?: Value | ((value: Value | any) => any)

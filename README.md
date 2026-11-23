@@ -118,6 +118,42 @@ setFormConfig({
 invalid field gets the focus; `label.success` is announced after a successful
 one. Set `showSuccess: false` when your application confirms the save itself.
 
+### Validate while typing
+
+By default a form validates on submission. Set `validateOnChange` to `true`
+(a 1 s pause) or a number of milliseconds to validate the edited field once the
+typing pauses:
+
+```ts
+const form = {
+  validateOnChange: true,
+  inputs: {
+    username: {
+      // May return a promise: it is awaited, and an answer that arrives after a
+      // more recent keystroke is ignored
+      validator: async (value) => {
+        if (await isTaken(value)) throw new Error("Already taken")
+      },
+    },
+    password: {},
+    confirm: {
+      dependsOn: ["password"], // validated again when `password` is edited
+      validator: (value, data) => {
+        if (value !== data.password) throw new Error("Does not match")
+      },
+    },
+    note: { validateOnChange: false }, // or a number: this field's own pause
+  },
+}
+```
+
+Only the edited field is validated, plus the fields that list it in `dependsOn`
+and were edited or already show an error. A field that was never edited shows no
+error, and an error clears as soon as the field is valid again, without waiting
+for the pause. Submission still validates everything (it does not wait for
+asynchronous validators), and the violations your API returns stay under their
+field until that field is edited.
+
 ### Translation
 
 Labels go through

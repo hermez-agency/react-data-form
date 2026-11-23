@@ -9,6 +9,11 @@ import { updateForm } from "@/form/utils/updateForm"
 import { upsertForm } from "@/form/utils/upsertForm"
 import { getDataFromForm } from "@/form/utils/getDataFromForm"
 import { addErrorFromViolations } from "@/form/utils/addErrorFromViolations"
+import { validateFormInput } from "@/form/utils/validateFormInput"
+import getFormInputInForm from "@/form/utils/getFormInputInForm"
+import getFormInputsFromForm from "@/form/utils/getFormInputsFromForm"
+import { isFormInputHidden } from "@/form/utils/isFormInputHidden"
+import ViolationInterface from "@/form/Violation"
 import { getFormConfig } from "@/form/FormConfig"
 import { isDeepEqual } from "@/internal/utils/object/isDeepEqual"
 import useDebounceCallback from "@/internal/hook/useDebounceCallback"
@@ -17,6 +22,15 @@ import { useEffectCallback } from "@/internal/hook/useEffectCallback"
 import { FormContext } from "@/form/provider/FormContext"
 import { createPubSub, Index } from "coooking-pubsub"
 import { translate } from "react-mini-i18n"
+
+// Pause in the typing before a `validateOnChange: true` field is validated
+const VALIDATE_ON_CHANGE_DELAY = 1000
+
+/** The pause in ms a `validateOnChange` setting stands for, if it is on. */
+function toDelay(setting: boolean | number | undefined, fallback?: number) {
+  if (setting === true) return fallback ?? VALIDATE_ON_CHANGE_DELAY
+  return typeof setting === "number" && setting >= 0 ? setting : undefined
+}
 
 export interface UseFormParams<Data extends object = any> {
   /**
@@ -142,6 +156,19 @@ export default function useForm<Data extends object = object>({
   // what isDirty compares against and reset() goes back to.
   const [pristineData, setPristineData] = useState<Data>(currentForm.data)
 
+  // Validation while typing. The sequence number of a field changes with each
+  // edit: an answer of an asynchronous validator is only kept while its number
+  // is still the current one.
+  const sequences = useRef(new Map<string, number>())
+  // Fields whose validator answered with a promise: not run on each keystroke
+  const asyncInputs = useRef(new Set<string>())
+  // Fields whose violations come from the server: cleared by the next edit
+  const serverViolations = useRef(new Set<string>())
+  // Fields the user edited: the only ones a dependency validates for them
+  const editedInputs = useRef(new Set<string>())
+  const waitingInputs = useRef(new Set<string>())
+  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>())
+
   const commitForm = (nextForm: FormBuiltInterface<Data>) => {
     latestForm.current = nextForm
     setCurrentForm(nextForm)
@@ -151,9 +178,21 @@ export default function useForm<Data extends object = object>({
   const handleChange = (formInput: FormInputInterface) => {
     if (formInput.readonly) return
 
-    const updatedForm = commitForm(
-      updateFormByFormInput<Data>(latestForm.current, formInput)
-    )
+    const valueChanged =
+      !!formInput.name &&
+      !isDeepEqual(
+        getFormInputInForm(latestForm.current, formInput.name)?.value,
+        formInput.value
+      )
+
+    let nextForm = updateFormByFormInput<Data>(latestForm.current, formInput)
+    if (valueChanged) nextForm = reviseViolations(nextForm, formInput.name!)
+    const updatedForm = commitForm(nextForm)
+
+    if (valueChanged) {
+      editedInputs.current.add(formInput.name!)
+      scheduleValidation(formInput.name!)
+    }
 
     // "Saved" no longer describes the values once one of them changes
     setSubmitResult((result) => (result?.status === "success" ? undefined : result))
@@ -164,7 +203,151 @@ export default function useForm<Data extends object = object>({
     }
   }
 
+  const withViolations = (
+    form: FormBuiltInterface<Data>,
+    name: string,
+    violations: ViolationInterface[]
+  ) => {
+    const current = getFormInputInForm(form, name)
+    if (!current || (!current.violations?.length && !violations.length)) return form
+
+    return updateFormByFormInput<Data>(form, { name, violations })
+  }
+
+  /** The validation delay of a field, `undefined` when it is not validated while typing. */
+  const getValidationDelay = (form: FormBuiltInterface<Data>, name: string) => {
+    const input = getFormInputInForm(form, name)
+    if (!input || input.generatedValue || isFormInputHidden(input, form)) {
+      return undefined
+    }
+    const formDelay = toDelay(form.validateOnChange)
+
+    return toDelay(input.validateOnChange ?? form.validateOnChange, formDelay)
+  }
+
+  /** The edited field, and the fields that read it and were edited or show an error. */
+  const getValidatedNames = (form: FormBuiltInterface<Data>, name: string) => [
+    name,
+    ...getFormInputsFromForm(form, false)
+      .filter(
+        (input) =>
+          input.name !== name &&
+          input.dependsOn?.includes(name) &&
+          (input.violations?.length || editedInputs.current.has(input.name!))
+      )
+      .map((input) => input.name!),
+  ]
+
+  // What an edit changes at once, without waiting for the pause: the server's
+  // violations are gone, and an error that no longer applies is cleared.
+  const reviseViolations = (form: FormBuiltInterface<Data>, name: string) => {
+    let revised = form
+
+    getValidatedNames(form, name).forEach((inputName) => {
+      const input = getFormInputInForm(revised, inputName)
+      if (!input?.violations?.length) return
+
+      if (serverViolations.current.delete(inputName)) {
+        revised = withViolations(revised, inputName, [])
+        return
+      }
+
+      // An asynchronous validator is not run on each keystroke
+      if (
+        getValidationDelay(revised, inputName) === undefined ||
+        asyncInputs.current.has(inputName)
+      ) {
+        return
+      }
+
+      const { violations, pending } = validateFormInput(
+        input,
+        inputName,
+        revised.data
+      )
+      if (!violations.length && !pending) {
+        revised = withViolations(revised, inputName, [])
+      }
+    })
+
+    return revised
+  }
+
+  const validateEdited = (names: string[]) => {
+    const form = latestForm.current
+
+    names
+      .flatMap((name) => getValidatedNames(form, name))
+      .forEach((name) => {
+        const input = getFormInputInForm(form, name)
+        if (!input || getValidationDelay(form, name) === undefined) return
+
+        const sequence = sequences.current.get(name)
+        const { violations, pending } = validateFormInput(input, name, form.data)
+
+        if (!pending) {
+          commitForm(withViolations(latestForm.current, name, violations))
+          return
+        }
+
+        asyncInputs.current.add(name)
+        if (violations.length) {
+          commitForm(withViolations(latestForm.current, name, violations))
+        }
+        void pending.then((asyncViolations) => {
+          // A later edit made this answer stale
+          if (sequences.current.get(name) !== sequence) return
+          commitForm(
+            withViolations(latestForm.current, name, [
+              ...violations,
+              ...asyncViolations,
+            ])
+          )
+        })
+      })
+  }
+
+  // Fields that follow the form's pause share one debounced run
+  const formDelay = toDelay(currentForm.validateOnChange) ?? VALIDATE_ON_CHANGE_DELAY
+  const validateWaitingInputs = useDebounceCallback(() => {
+    const names = [...waitingInputs.current]
+    waitingInputs.current.clear()
+    validateEdited(names)
+  }, formDelay)
+
+  const scheduleValidation = (name: string) => {
+    const delay = getValidationDelay(latestForm.current, name)
+    if (delay === undefined) return
+
+    getValidatedNames(latestForm.current, name).forEach((inputName) =>
+      sequences.current.set(inputName, (sequences.current.get(inputName) ?? 0) + 1)
+    )
+
+    const input = getFormInputInForm(latestForm.current, name)
+    if (typeof input?.validateOnChange !== "number") {
+      waitingInputs.current.add(name)
+      validateWaitingInputs()
+      return
+    }
+
+    // A field with a pause of its own is debounced on its own
+    clearTimeout(timers.current.get(name))
+    timers.current.set(
+      name,
+      setTimeout(() => {
+        timers.current.delete(name)
+        validateEdited([name])
+      }, delay)
+    )
+  }
+
+  useEffect(() => {
+    const pendingTimers = timers.current
+    return () => pendingTimers.forEach(clearTimeout)
+  }, [])
+
   const validate = () => {
+    serverViolations.current.clear()
     const validatedForm = commitForm(validateForm(latestForm.current))
 
     // Every sub-form runs, so that each one shows its own violations
@@ -216,6 +399,11 @@ export default function useForm<Data extends object = object>({
         ? commitForm(addErrorFromViolations(latestForm.current, apiError))
         : latestForm.current
       submitErrors.current = apiError ? failedForm.errors : undefined
+      serverViolations.current = new Set(
+        Object.keys(failedForm.inputs).filter(
+          (key) => failedForm.inputs[key].violations?.length
+        )
+      )
 
       isLoading.setFalse()
       onError?.(error, failedForm)
@@ -316,6 +504,8 @@ export default function useForm<Data extends object = object>({
       ),
     })
     submitErrors.current = undefined
+    serverViolations.current.clear()
+    editedInputs.current.clear()
     setSubmitResult(undefined)
 
     onChange?.(updatedForm.data, updatedForm)
