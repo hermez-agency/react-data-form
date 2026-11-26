@@ -91,6 +91,10 @@ configurePorts({
   // BCP 47 tag used by Intl for dates and amounts, and the currency for prices.
   intlLocale: "fr-FR",
   currency: "EUR",
+  // Cleans the HTML of the rich-text editor (initial, pasted, emitted and read
+  // values). A built-in sanitizer is used by default; pass your own function
+  // (e.g. DOMPurify.sanitize) to replace it, or false to disable it.
+  sanitizeHtml: (html) => DOMPurify.sanitize(html),
 
   components: {
     // Renders the readable label of an IRI in dropdowns.
