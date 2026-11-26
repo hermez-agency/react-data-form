@@ -26,7 +26,7 @@ import {
 } from "@/ui/tooltip"
 import { BubbleMenu } from "@tiptap/react/menus"
 import { Toggle } from "./toggle"
-import { sanitizeHtml } from "@/ui/sanitizeHtml"
+import { cleanHtml } from "@/internal/html/cleanHtml"
 import { translate } from "react-mini-i18n"
 
 const MenuBar = ({ editor }: { editor: Editor | null }) => {
@@ -259,25 +259,26 @@ export default function WysiwygEditor(props: {
         },
       }),
     ],
-    content: sanitizeHtml(props.value ?? ""),
+    content: cleanHtml(props.value ?? ""),
     onUpdate: ({ editor }) => {
-      props.onChange(editor.getHTML())
+      props.onChange(cleanHtml(editor.getHTML()))
     },
     editorProps: {
       attributes: {
         class:
           "prose prose-sm sm:prose-base lg:prose-lg max-w-none focus:outline-none min-h-[300px]",
       },
-      transformPastedHTML: (html) => sanitizeHtml(html),
+      transformPastedHTML: (html) => cleanHtml(html),
     },
   })
 
   // `content` is only read on mount: follow a value changed from outside,
-  // but not the one the editor has just emitted while typing.
+  // but not the one the editor has just emitted while typing — compared once
+  // cleaned, since the emitted value is the cleaned editor HTML.
   useEffect(() => {
     if (!editor || editor.isDestroyed) return
-    const content = sanitizeHtml(props.value ?? "")
-    if (content !== editor.getHTML()) {
+    const content = cleanHtml(props.value ?? "")
+    if (content !== cleanHtml(editor.getHTML())) {
       editor.commands.setContent(content, { emitUpdate: false })
     }
   }, [editor, props.value])

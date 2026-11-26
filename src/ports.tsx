@@ -41,6 +41,21 @@ export interface PortsInterface {
    */
   currency?: string
 
+  /**
+   * Cleans the HTML of the rich-text editor: the initial value, pasted content,
+   * every value it emits and what `WysiwygReader` displays. Left undefined, a
+   * built-in allow-list sanitizer drops `<script>`, `on*` attributes and
+   * `javascript:` links. Pass your own function to replace it — DOMPurify, for
+   * instance — or `false` to disable it when the HTML is trusted or cleaned
+   * elsewhere:
+   *
+   * ```ts
+   * import DOMPurify from "dompurify"
+   * configurePorts({ sanitizeHtml: (html) => DOMPurify.sanitize(html) })
+   * ```
+   */
+  sanitizeHtml?: ((html: string) => string) | false
+
   components: {
     /**
      * Renders the label of an IRI inside comboboxes — an IRI on its own is not
@@ -75,8 +90,9 @@ export function getPorts(): PortsInterface {
  * Settings accepted by {@link configurePorts}: everything is optional, down to
  * individual components.
  */
-export interface ConfigurePortsInput
-  extends Partial<Omit<PortsInterface, "components">> {
+export interface ConfigurePortsInput extends Partial<
+  Omit<PortsInterface, "components">
+> {
   components?: Partial<PortsInterface["components"]>
 }
 
